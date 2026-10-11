@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: cinecloud-nuvio-addon
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
