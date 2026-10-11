@@ -11,11 +11,17 @@ const catalogData = JSON.parse(fs.readFileSync(catalogFile, 'utf8'));
 const items = Array.isArray(catalogData.items) ? catalogData.items : [];
 const app = express();
 const port = Number.parseInt(process.env.PORT || '7000', 10);
+const providers = require('./providers').createProviderRegistry({ libraryItems: items });
 
 app.disable('x-powered-by');
 
 app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', service: 'cinecloud-nuvio-addon', version: manifest.version });
+  res.status(200).json({
+    status: 'ok',
+    service: 'cinecloud-nuvio-addon',
+    version: manifest.version,
+    providers: providers.enabled
+  });
 });
 
 app.get('/manifest.json', (_req, res) => {
@@ -25,51 +31,37 @@ app.get('/manifest.json', (_req, res) => {
 
 const builder = new addonBuilder(manifest);
 
-function toMeta(item) {
-  return {
-    id: item.id,
-    type: item.type,
-    name: item.name,
-    description: item.description,
-    releaseInfo: item.releaseInfo,
-    genres: item.genres
-  };
-}
+builder.defineCatalogHandler(async ({ type, id, extra = {} } = {}) => {
+  const supportedCatalog = manifest.catalogs.some((catalog) => catalog.type === type && catalog.id === id);
+  if (!supportedCatalog) return { metas: [] };
 
-builder.defineCatalogHandler(({ type, id, extra = {} } = {}) => {
-  if (type !== 'movie' || id !== 'cinecloud-open') return Promise.resolve({ metas: [] });
-  const query = String(extra.search || '').trim().toLocaleLowerCase('en');
-  const metas = items
-    .filter((item) => item.type === type)
-    .filter((item) => !query || `${item.name} ${item.description} ${(item.genres || []).join(' ')}`.toLocaleLowerCase('en').includes(query))
-    .map(toMeta);
-  return Promise.resolve({ metas });
-});
-
-builder.defineMetaHandler(({ type, id } = {}) => {
-  const item = items.find((entry) => entry.type === type && entry.id === id);
-  return Promise.resolve(item ? { meta: toMeta(item) } : { meta: null });
-});
-
-builder.defineStreamHandler(({ type, id } = {}) => {
-  const item = items.find((entry) => entry.type === type && entry.id === id);
-  if (!item || typeof item.streamUrl !== 'string') return Promise.resolve({ streams: [] });
-
-  let streamUrl;
   try {
-    streamUrl = new URL(item.streamUrl);
-  } catch {
-    return Promise.resolve({ streams: [] });
+    const metas = await providers.catalog({ type, catalogId: id, search: extra.search || '' });
+    return { metas };
+  } catch (error) {
+    console.error('[addon] Catalog handler failed safely:', error && error.message ? error.message : 'unknown error');
+    return { metas: [] };
   }
-  if (streamUrl.protocol !== 'https:') return Promise.resolve({ streams: [] });
+});
 
-  return Promise.resolve({
-    streams: [{
-      name: 'CineCloud • Open Movie',
-      title: item.streamTitle || item.name,
-      url: streamUrl.toString()
-    }]
-  });
+builder.defineMetaHandler(async ({ type, id } = {}) => {
+  try {
+    const meta = await providers.meta({ type, id });
+    return { meta: meta || null };
+  } catch (error) {
+    console.error('[addon] Metadata handler failed safely:', error && error.message ? error.message : 'unknown error');
+    return { meta: null };
+  }
+});
+
+builder.defineStreamHandler(async ({ type, id } = {}) => {
+  try {
+    const streams = await providers.streams({ type, id });
+    return { streams: streams || [] };
+  } catch (error) {
+    console.error('[addon] Stream handler failed safely:', error && error.message ? error.message : 'unknown error');
+    return { streams: [] };
+  }
 });
 
 app.use(getRouter(builder.getInterface()));
