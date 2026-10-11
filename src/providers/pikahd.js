@@ -56,7 +56,8 @@ function normalizeDirectStream(value, fallbackTitle = '') {
 function normalizeItem(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const name = cleanString(raw.name || raw.title, 250);
-  const idBase = slugify(raw.id || name);
+  const rawId = cleanString(raw.id || name, 180).replace(/^pikahd:/i, '');
+  const idBase = slugify(rawId);
   const type = raw.type === 'series' ? 'series' : raw.type === 'movie' ? 'movie' : null;
   if (!name || !idBase || !type) return null;
 
@@ -69,7 +70,7 @@ function normalizeItem(raw) {
     .filter(Boolean);
 
   return {
-    id: idBase.startsWith(`${PROVIDER_ID}:`) ? idBase : `${PROVIDER_ID}:${idBase}`,
+    id: `${PROVIDER_ID}:${idBase}`,
     type,
     name,
     description: cleanString(raw.description, 3000),
