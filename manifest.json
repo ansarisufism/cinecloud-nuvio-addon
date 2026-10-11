@@ -1,24 +1,37 @@
 {
   "id": "com.cinecloud.openmovies",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "CineCloud Open Movies",
-  "description": "A demo catalog for open and explicitly licensed video content. Add only media you own or are authorized to distribute.",
+  "description": "A demo catalog for open and explicitly licensed video content. Configure additional authorized JSON feeds via environment variables.",
   "resources": [
     "catalog",
     "meta",
     "stream"
   ],
   "types": [
-    "movie"
+    "movie",
+    "series"
   ],
   "idPrefixes": [
-    "cc:"
+    "cc:",
+    "pikahd:"
   ],
   "catalogs": [
     {
       "type": "movie",
       "id": "cinecloud-open",
       "name": "CineCloud Open Movies",
+      "extra": [
+        {
+          "name": "search",
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "type": "series",
+      "id": "cinecloud-series",
+      "name": "CineCloud Open Series",
       "extra": [
         {
           "name": "search",
