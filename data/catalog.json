@@ -1,0 +1,20 @@
+{
+  "items": [
+    {
+      "id": "cc:big-buck-bunny",
+      "type": "movie",
+      "name": "Big Buck Bunny",
+      "releaseInfo": "2008",
+      "genres": [
+        "Animation",
+        "Comedy",
+        "Open Movie"
+      ],
+      "description": "An open animated short film produced by the Blender Foundation. Demo playback points to the film's publicly available download. The work is released under Creative Commons Attribution 3.0; comply with the license and provide attribution when redistributing.",
+      "license": "Creative Commons Attribution 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "streamUrl": "https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4",
+      "streamTitle": "Big Buck Bunny (licensed open-movie demo)"
+    }
+  ]
+}
